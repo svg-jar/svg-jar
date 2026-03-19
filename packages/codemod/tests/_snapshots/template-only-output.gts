@@ -1,5 +1,6 @@
-import svgJar from 'ember-svg-jar/helpers/svg-jar';
 import type { TOC } from '@ember/component/template-only';
+import IconName from 'my-app/assets/icons/icon-name.svg';
+import IconNameInline from 'my-app/assets/icons/icon-name.svg?unsafe-inline';
 
 export interface TempSignature {
   Args: {};
@@ -10,10 +11,10 @@ export interface TempSignature {
 }
 
 const Temp: TOC<TempSignature> = <template>
-  {{svgJar "icon-name"}}
-  {{svgJar "icon-name" class="my-icon"}}
-  {{svgJar "#icon-name"}}
-  {{svgJar "#icon-name" class="my-icon"}}
+  <IconNameInline />
+  <IconNameInline class="my-icon" />
+  <IconName />
+  <IconName class="my-icon" />
 </template>
 
 export default Temp;

@@ -6,6 +6,15 @@ const j = z.withParser(emberParser);
 
 type IconType = 'inline' | 'sprite';
 
+/**
+ * A composite key that uniquely identifies an icon by both its slug and type.
+ * This allows the same slug used as both inline and sprite to be tracked
+ * as two distinct entries.
+ *
+ * @example "icon-name:inline" | "icon-name:sprite"
+ */
+type IconKey = `${string}:${IconType}`;
+
 interface UsedIcon {
   /** PascalCase component name derived from the icon slug, e.g. "OneIcon" */
   componentName: string;
@@ -29,7 +38,7 @@ function toPascalCase(str: string): string {
  * Determines whether an icon is inline SVG or a sprite reference.
  * ember-svg-jar uses a leading "#" to denote sprite icons.
  *
- * @example "one-icon"   → 'inline'
+ * @example "one-icon"     → 'inline'
  * @example "#sprite-icon" → 'sprite'
  */
 function determineIconType(rawIconName: string): IconType {
@@ -132,19 +141,64 @@ function buildIconImportPath(iconSlug: string, type: IconType): string {
 }
 
 /**
+ * Pre-scans all svgJar mustache calls to collect the full set of (slug, type)
+ * pairs used in the file, then resolves any name conflicts.
+ *
+ * Conflict rule: when the same slug appears as both inline and sprite, the
+ * sprite gets the plain PascalCase name (e.g. "IconName") and the inline
+ * variant gets an "Inline" suffix (e.g. "IconNameInline").
+ *
+ * Returns a Map keyed by IconKey ("slug:type") → UsedIcon, which the
+ * replacement pass uses to look up the resolved component name for each call.
+ */
+function resolveIconNames(svgJarUsages: FilteredCollection): Map<IconKey, UsedIcon> {
+  // First, collect every distinct (slug, type) pair encountered.
+  const entries = new Map<IconKey, UsedIcon>();
+
+  svgJarUsages.forEach((path: NodePath) => {
+    const node = path.node as GlimmerMustacheStatement;
+    const rawName = extractRawIconName(node.params[0]);
+    if (!rawName) return;
+
+    const iconSlug = rawName.replace(/^#/, '');
+    const type = determineIconType(rawName);
+    const key: IconKey = `${iconSlug}:${type}`;
+
+    if (!entries.has(key)) {
+      // Assign the plain PascalCase name initially; conflicts are resolved below.
+      entries.set(key, { componentName: toPascalCase(iconSlug), iconSlug, type });
+    }
+  });
+
+  // Detect conflicts: same slug appearing as both inline and sprite.
+  // When a conflict exists, the sprite keeps the plain name and the inline
+  // variant is suffixed with "Inline".
+  for (const [key, icon] of entries) {
+    if (icon.type === 'inline') {
+      const spriteKey: IconKey = `${icon.iconSlug}:sprite`;
+      if (entries.has(spriteKey)) {
+        entries.set(key, { ...icon, componentName: `${icon.componentName}Inline` });
+      }
+    }
+  }
+
+  return entries;
+}
+
+/**
  * Replaces every `{{svgJar ...}}` mustache call in the template with the
  * equivalent angle-bracket component invocation, e.g. `<OneIcon />`.
  *
- * Returns a Map of component name → UsedIcon for every distinct icon
- * encountered. Using a Map keyed by component name naturally deduplicates:
- * if the same icon is used multiple times, the second set() is a no-op
- * because the key already exists.
+ * Uses the pre-resolved icon name map so that conflict disambiguation
+ * (IconName vs IconNameInline) is already settled before any replacement runs.
  *
  * Mustaches whose icon name cannot be statically resolved are left unchanged.
  */
-function replaceMustachesWithComponents(svgJarUsages: FilteredCollection, source: string): Map<string, UsedIcon> {
-  const usedIcons = new Map<string, UsedIcon>();
-
+function replaceMustachesWithComponents(
+  svgJarUsages: FilteredCollection,
+  resolvedIcons: Map<IconKey, UsedIcon>,
+  source: string,
+): void {
   svgJarUsages.replaceWith((path: NodePath) => {
     const node = path.node as GlimmerMustacheStatement;
     const rawName = extractRawIconName(node.params[0]);
@@ -155,22 +209,25 @@ function replaceMustachesWithComponents(svgJarUsages: FilteredCollection, source
     }
 
     const iconSlug = rawName.replace(/^#/, '');
-    const componentName = toPascalCase(iconSlug);
+    const type = determineIconType(rawName);
+    const key: IconKey = `${iconSlug}:${type}`;
+    const icon = resolvedIcons.get(key);
 
-    usedIcons.set(componentName, { componentName, iconSlug, type: determineIconType(rawName) });
+    // Should always be present since resolveIconNames saw the same usages,
+    // but guard defensively to avoid a runtime crash.
+    if (!icon) {
+      return node;
+    }
 
-    return buildComponentTag(componentName, node.hash?.pairs ?? [], source);
+    return buildComponentTag(icon.componentName, node.hash?.pairs ?? [], source);
   });
-
-  return usedIcons;
 }
 
 /**
  * Inserts an import declaration for each icon component collected during the
- * mustache replacement pass, positioned after the last existing import in the
- * file.
+ * pre-scan pass, positioned after the last existing import in the file.
  */
-function addIconImports(root: Collection, usedIcons: Map<string, UsedIcon>): void {
+function addIconImports(root: Collection, usedIcons: Map<IconKey, UsedIcon>): void {
   const allImports = root.find(j.ImportDeclaration);
 
   // FilteredCollection.at() does not support negative indices, so use length - 1
@@ -188,17 +245,23 @@ function addIconImports(root: Collection, usedIcons: Map<string, UsedIcon>): voi
  *
  * Steps performed:
  *   1. Parse the file with the Glimmer-aware ember parser.
- *   2. Find all `{{svgJar "..."}}` mustache calls in templates.
- *   3. Replace each with an angle-bracket component invocation.
+ *   2. Pre-scan all `{{svgJar "..."}}` calls to collect icon slugs/types and
+ *      resolve any name conflicts (same slug used as both inline and sprite
+ *      gets distinct names: IconName / IconNameInline).
+ *   3. Replace each mustache with the resolved angle-bracket component tag.
  *   4. Remove the `ember-svg-jar` import declaration.
- *   5. Add a new import for each icon component used.
+ *   5. Add a new import for each distinct icon component used.
  *
  * @param source   Raw source text of the file.
  * @param filePath Path to the file (used by the parser to select JS vs TS mode).
  * @returns        Transformed source text.
  */
 export function run(source: string, filePath: string): string {
-  const root = j(source, { filePath });
+  // ember-estree forwards filePath to oxc-parser, which only enables TypeScript
+  // syntax when the filename ends in .ts/.tsx. Map .gts → .ts and .gjs → .js
+  // so the underlying parser uses the correct language mode.
+  const parserFilePath = filePath.replace(/\.gts$/, '.ts');
+  const root = j(source, { filePath: parserFilePath });
 
   const svgJarImport = root.find(j.ImportDeclaration, { source: { value: 'ember-svg-jar/helpers/svg-jar' } });
 
@@ -210,11 +273,16 @@ export function run(source: string, filePath: string): string {
     path: { original: identifier },
   });
 
-  const usedIcons = replaceMustachesWithComponents(svgJarUsages, source);
+  // Pre-scan: collect all (slug, type) pairs and resolve name conflicts before
+  // any mutations are made. This ensures the same slug used as both inline and
+  // sprite gets distinct names (e.g. IconName / IconNameInline).
+  const resolvedIcons = resolveIconNames(svgJarUsages);
+
+  replaceMustachesWithComponents(svgJarUsages, resolvedIcons, source);
 
   svgJarImport.remove();
 
-  addIconImports(root, usedIcons);
+  addIconImports(root, resolvedIcons);
 
   return root.toSource();
 }
