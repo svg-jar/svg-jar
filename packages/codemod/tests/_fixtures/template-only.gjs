@@ -1,4 +1,4 @@
-import svgJar from 'ember-svg-jar';
+import svgJar from 'ember-svg-jar/helpers/svg-jar';
 
 <template>
   {{svgJar "icon-name"}}

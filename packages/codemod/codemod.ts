@@ -200,7 +200,7 @@ function addIconImports(root: Collection, usedIcons: Map<string, UsedIcon>): voi
 export function run(source: string, filePath: string): string {
   const root = j(source, { filePath });
 
-  const svgJarImport = root.find(j.ImportDeclaration, { source: { value: 'ember-svg-jar' } });
+  const svgJarImport = root.find(j.ImportDeclaration, { source: { value: 'ember-svg-jar/helpers/svg-jar' } });
 
   // Read the local identifier used for the default import (typically "svgJar",
   // but could be anything the user chose when they wrote the import).

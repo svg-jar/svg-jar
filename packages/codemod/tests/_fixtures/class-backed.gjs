@@ -1,5 +1,5 @@
 import Component from '@glimmer/component';
-import svgJar from 'ember-svg-jar';
+import svgJar from 'ember-svg-jar/helpers/svg-jar';
 
 export default class ClassName extends Component {
   <template>

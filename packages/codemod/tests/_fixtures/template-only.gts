@@ -1,4 +1,4 @@
-import svgJar from 'ember-svg-jar';
+import svgJar from 'ember-svg-jar/helpers/svg-jar';
 import type { TOC } from '@ember/component/template-only';
 
 export interface TempSignature {

@@ -10,7 +10,7 @@ const classBackedFixture = readFileSync('./tests/_fixtures/class-backed.gjs', 'u
 
 test('removes import from svgJar', () => {
   expect(run(classBackedFixture, './tests/_fixtures/class-backed.gjs')).not.toContain(
-    "import svgJar from 'ember-svg-jar';",
+    "import svgJar from 'ember-svg-jar/helpers/svg-jar';",
   );
 });
 
