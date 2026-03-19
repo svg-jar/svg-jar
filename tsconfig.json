@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    // Targeting Node.js with ESM — matches "type": "module" in package.json
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+
+    // Strict type checking
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Don't emit — each package handles its own build
+    "noEmit": true,
+
+    // Skip type-checking of third-party declaration files
+    "skipLibCheck": true,
+
+    // Allow .ts source imports (used by vitest / tsx)
+    "allowImportingTsExtensions": true,
+
+    // Consistent interop
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["packages/*/src/**/*", "packages/*/*.ts", "packages/*/tests/**/*"]
+}

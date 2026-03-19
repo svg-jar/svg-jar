@@ -1,0 +1,30 @@
+{
+  "name": "@svg-jar/codemod",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [
+    "ember-svg-jar",
+    "codemod",
+    "svg-jar",
+    "svg",
+    "ember-codemod"
+  ],
+  "author": "Liam Potter <liam@liampotter.co.uk>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/svg-jar/svg-jar",
+    "directory": "packages/codemod"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@10.32.1",
+  "type": "module",
+  "dependencies": {
+    "vitest": "^4.1.0",
+    "zmod": "^0.3.1",
+    "zmod-ember": "^0.1.0"
+  }
+}
