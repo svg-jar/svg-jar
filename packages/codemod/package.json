@@ -4,7 +4,9 @@
   "description": "A codemod to help users migrate away from ember-svg-jar",
   "main": "index.js",
   "scripts": {
-    "test": "vitest"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
   },
   "keywords": [
     "ember-svg-jar",
@@ -34,6 +36,7 @@
     "zmod-ember": "^0.3.0"
   },
   "devDependencies": {
+    "@vitest/ui": "4.1.0",
     "gradient-string": "^3.0.0",
     "vite": "^8.0.1",
     "vitest": "^4.1.0"
