@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { removeSvgJarConfig } from '#lib/remove-svg-jar-config.ts';
-import { readScenarioFile, snapshotPath } from '../helpers.ts';
+import { readScenarioFile, snapshotPath } from '#test/helpers.ts';
 
 describe('removeSvgJarConfig', () => {
   it('removes the svgJar property from a complete config', async () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { run } from '../codemod.ts';
-import { readFixture } from './helpers.ts';
+import { readFixture } from '#test/helpers.ts';
 
 const classBackedFixture = readFixture('class-backed.gjs');
 const classBackedTsFixture = readFixture('class-backed.gts');

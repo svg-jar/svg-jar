@@ -23,7 +23,8 @@
   "packageManager": "pnpm@10.32.1",
   "type": "module",
   "imports": {
-    "#lib/*": "./lib/*"
+    "#lib/*": "./lib/*",
+    "#test/*": "./test/*"
   },
   "dependencies": {
     "@clack/prompts": "^1.1.0",

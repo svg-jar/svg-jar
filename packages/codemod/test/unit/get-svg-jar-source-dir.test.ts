@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getSvgJarSourceDir } from '#lib/get-svg-jar-source-dir.ts';
-import { readScenarioFile } from '../helpers.ts';
+import { readScenarioFile } from '#test/helpers.ts';
 
 describe('getSvgJarSourceDir', () => {
   it('should collect sourceDirs from svgJar config in ember-cli-build.js', () => {
