@@ -10,7 +10,7 @@ const noImportsFixture = readFixture('no-imports.gjs');
 const renamedImportFixture = readFixture('renamed-import.gjs');
 
 describe('class-backed.gjs', () => {
-  const output = run(classBackedFixture, './test/_fixtures/class-backed.gjs');
+  const output = run(classBackedFixture, 'class-backed.gjs');
 
   it('removes import from svgJar', () => {
     expect(output).not.toContain("import svgJar from 'ember-svg-jar/helpers/svg-jar';");
@@ -40,7 +40,7 @@ describe('class-backed.gjs', () => {
 describe('class-backed.gts', () => {
   // "icon-name" appears as both inline and sprite, so they get distinct names:
   // inline → IconNameInline, sprite → IconName.
-  const output = run(classBackedTsFixture, './test/_fixtures/class-backed.gts');
+  const output = run(classBackedTsFixture, 'class-backed.gts');
 
   it('removes import from svgJar', () => {
     expect(output).not.toContain("import svgJar from 'ember-svg-jar/helpers/svg-jar';");
@@ -65,7 +65,7 @@ describe('class-backed.gts', () => {
 
 describe('template-only.gjs', () => {
   // "icon-name" appears as both inline and sprite → disambiguated names.
-  const output = run(templateOnlyFixture, './test/_fixtures/template-only.gjs');
+  const output = run(templateOnlyFixture, 'template-only.gjs');
 
   it('removes import from svgJar', () => {
     expect(output).not.toContain("import svgJar from 'ember-svg-jar/helpers/svg-jar';");
@@ -90,7 +90,7 @@ describe('template-only.gjs', () => {
 
 describe('template-only.gts', () => {
   // "icon-name" appears as both inline and sprite → disambiguated names.
-  const output = run(templateOnlyTsFixture, './test/_fixtures/template-only.gts');
+  const output = run(templateOnlyTsFixture, 'template-only.gts');
 
   it('removes import from svgJar', () => {
     expect(output).not.toContain("import svgJar from 'ember-svg-jar/helpers/svg-jar';");
@@ -115,7 +115,7 @@ describe('template-only.gts', () => {
 
 describe('no-imports.gjs', () => {
   // Only one inline icon, no sprite counterpart — plain name, no Inline suffix.
-  const output = run(noImportsFixture, './test/_fixtures/no-imports.gjs');
+  const output = run(noImportsFixture, 'no-imports.gjs');
 
   it('handles files with no imports', () => {
     expect(output).toContain("import IconName from 'my-app/assets/icons/icon-name.svg?unsafe-inline';");
@@ -125,7 +125,7 @@ describe('no-imports.gjs', () => {
 });
 
 describe('renamed-import.gjs', () => {
-  const output = run(renamedImportFixture, './test/_fixtures/renamed-import.gjs');
+  const output = run(renamedImportFixture, 'renamed-import.gjs');
 
   it('handles custom import names', () => {
     expect(output).toContain('<IconName />');
