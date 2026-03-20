@@ -1,6 +1,6 @@
 import { z, type Collection, type FilteredCollection, type NodePath } from 'zmod';
 import { emberParser } from 'zmod-ember';
-import type { GlimmerExpression, GlimmerHashPair, GlimmerMustacheStatement } from './glimmer-types.ts';
+import type { GlimmerExpression, GlimmerHashPair, GlimmerMustacheStatement } from './types/glimmer-types.ts';
 
 const j = z.withParser(emberParser);
 
@@ -244,7 +244,9 @@ function addIconImports(root: Collection, usedIcons: Map<IconKey, UsedIcon>): vo
   } else {
     // No existing imports — prepend all icon imports at the top of the file.
     const lines = [...usedIcons.values()]
-      .map(({ componentName, iconSlug, type }) => `import ${componentName} from '${buildIconImportPath(iconSlug, type)}';`)
+      .map(
+        ({ componentName, iconSlug, type }) => `import ${componentName} from '${buildIconImportPath(iconSlug, type)}';`,
+      )
       .join('\n');
     root.insertAt(0, lines + '\n\n');
   }
@@ -277,8 +279,7 @@ export function run(source: string, filePath: string): string {
   // no import declaration — e.g. template-only files that rely on the helper
   // being in scope without an explicit import.
   const importSpecifier = svgJarImport.find(j.ImportDefaultSpecifier);
-  const identifier: string =
-    importSpecifier.length > 0 ? importSpecifier.get().node.local.name : 'svgJar';
+  const identifier: string = importSpecifier.length > 0 ? importSpecifier.get().node.local.name : 'svgJar';
 
   const svgJarUsages = root.find('GlimmerMustacheStatement', {
     path: { original: identifier },

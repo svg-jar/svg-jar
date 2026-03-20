@@ -14,5 +14,11 @@
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true
   },
-  "include": ["packages/*/src/**/*", "packages/*/*.ts", "packages/*/tests/**/*", "packages/codemod/lib/banners.ts"]
+  "include": [
+    "packages/*/src/**/*",
+    "packages/*/*.ts",
+    "packages/*/tests/**/*",
+    "packages/codemod/lib/banners.ts",
+    "packages/codemod/types/glimmer-types.ts"
+  ]
 }
