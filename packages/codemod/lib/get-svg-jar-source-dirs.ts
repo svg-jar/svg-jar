@@ -12,8 +12,7 @@ function toStringOrNull(element: ASTNode): string | null {
   return element.value;
 }
 
-export function getSvgJarSourceDir(source: string) {
-
+export function getSvgJarSourceDirs(source: string) {
   // Find all sourceDirs arrays anywhere under the svgJar config object —
   // covers both the flat form (svgJar.sourceDirs) and strategy-level form
   // (svgJar.inline.sourceDirs, svgJar.symbol.sourceDirs, etc.).
