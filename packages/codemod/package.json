@@ -1,7 +1,7 @@
 {
   "name": "@svg-jar/codemod",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.1",
+  "description": "A codemod to help users migrate away from ember-svg-jar",
   "main": "index.js",
   "scripts": {
     "test": "vitest"
@@ -22,9 +22,19 @@
   "license": "MIT",
   "packageManager": "pnpm@10.32.1",
   "type": "module",
+  "imports": {
+    "#lib/*": "./lib/*"
+  },
   "dependencies": {
-    "vitest": "^4.1.0",
+    "@clack/prompts": "^1.1.0",
+    "commander": "^14.0.3",
+    "picocolors": "^1.1.1",
     "zmod": "^0.3.1",
-    "zmod-ember": "^0.1.0"
+    "zmod-ember": "^0.3.0"
+  },
+  "devDependencies": {
+    "gradient-string": "^3.0.0",
+    "vite": "^8.0.1",
+    "vitest": "^4.1.0"
   }
 }

@@ -225,17 +225,28 @@ function replaceMustachesWithComponents(
 
 /**
  * Inserts an import declaration for each icon component collected during the
- * pre-scan pass, positioned after the last existing import in the file.
+ * pre-scan pass.
+ *
+ * If the file already has imports, the new ones are inserted after the last
+ * existing import. If there are no imports at all (e.g. a bare template-only
+ * component with no JS), the imports are prepended at the top of the file.
  */
 function addIconImports(root: Collection, usedIcons: Map<IconKey, UsedIcon>): void {
   const allImports = root.find(j.ImportDeclaration);
 
-  // FilteredCollection.at() does not support negative indices, so use length - 1
-  const lastImport = allImports.at(allImports.length - 1);
-
-  for (const { componentName, iconSlug, type } of usedIcons.values()) {
-    const importPath = buildIconImportPath(iconSlug, type);
-    lastImport?.insertAfter(`\nimport ${componentName} from '${importPath}';`);
+  if (allImports.length > 0) {
+    // FilteredCollection.at() does not support negative indices, so use length - 1
+    const lastImport = allImports.at(allImports.length - 1);
+    for (const { componentName, iconSlug, type } of usedIcons.values()) {
+      const importPath = buildIconImportPath(iconSlug, type);
+      lastImport?.insertAfter(`\nimport ${componentName} from '${importPath}';`);
+    }
+  } else {
+    // No existing imports — prepend all icon imports at the top of the file.
+    const lines = [...usedIcons.values()]
+      .map(({ componentName, iconSlug, type }) => `import ${componentName} from '${buildIconImportPath(iconSlug, type)}';`)
+      .join('\n');
+    root.insertAt(0, lines + '\n\n');
   }
 }
 
@@ -253,21 +264,21 @@ function addIconImports(root: Collection, usedIcons: Map<IconKey, UsedIcon>): vo
  *   5. Add a new import for each distinct icon component used.
  *
  * @param source   Raw source text of the file.
- * @param filePath Path to the file (used by the parser to select JS vs TS mode).
+ * @param filePath Path to the file (forwarded to the parser for language detection).
  * @returns        Transformed source text.
  */
 export function run(source: string, filePath: string): string {
-  // ember-estree forwards filePath to oxc-parser, which only enables TypeScript
-  // syntax when the filename ends in .ts/.tsx. Map .gts → .ts and .gjs → .js
-  // so the underlying parser uses the correct language mode.
-  const parserFilePath = filePath.replace(/\.gts$/, '.ts');
-  const root = j(source, { filePath: parserFilePath });
+  const root = j(source, { filePath });
 
   const svgJarImport = root.find(j.ImportDeclaration, { source: { value: 'ember-svg-jar/helpers/svg-jar' } });
 
-  // Read the local identifier used for the default import (typically "svgJar",
-  // but could be anything the user chose when they wrote the import).
-  const identifier = svgJarImport.find(j.ImportDefaultSpecifier).get().node.local.name;
+  // Read the local identifier from the import when present (typically "svgJar",
+  // but could be any alias the user chose). Fall back to "svgJar" when there is
+  // no import declaration — e.g. template-only files that rely on the helper
+  // being in scope without an explicit import.
+  const importSpecifier = svgJarImport.find(j.ImportDefaultSpecifier);
+  const identifier: string =
+    importSpecifier.length > 0 ? importSpecifier.get().node.local.name : 'svgJar';
 
   const svgJarUsages = root.find('GlimmerMustacheStatement', {
     path: { original: identifier },
@@ -280,7 +291,10 @@ export function run(source: string, filePath: string): string {
 
   replaceMustachesWithComponents(svgJarUsages, resolvedIcons, source);
 
-  svgJarImport.remove();
+  // Only attempt to remove the import if one was actually found.
+  if (svgJarImport.length > 0) {
+    svgJarImport.remove();
+  }
 
   addIconImports(root, resolvedIcons);
 

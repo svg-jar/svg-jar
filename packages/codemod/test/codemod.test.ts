@@ -7,6 +7,7 @@ const classBackedFixture = readFileSync('./tests/_fixtures/class-backed.gjs', 'u
 const classBackedTsFixture = readFileSync('./tests/_fixtures/class-backed.gts', 'utf-8');
 const templateOnlyFixture = readFileSync('./tests/_fixtures/template-only.gjs', 'utf-8');
 const templateOnlyTsFixture = readFileSync('./tests/_fixtures/template-only.gts', 'utf-8');
+const noImportsFixture = readFileSync('./tests/_fixtures/no-imports.gjs', 'utf-8');
 
 // ---------------------------------------------------------------------------
 // class-backed.gjs
@@ -143,4 +144,35 @@ test('template-only.gts: adds new imports for icon components', async () => {
   expect(output).toContain("import IconName from 'my-app/assets/icons/icon-name.svg';");
 
   await expect(output).toMatchFileSnapshot('./_snapshots/template-only-output.gts');
+});
+
+// ---------------------------------------------------------------------------
+// no imports
+// ---------------------------------------------------------------------------
+
+test('no-imports.gjs: handles files with no imports', async () => {
+  const output = run(noImportsFixture, './tests/_fixtures/no-imports.gjs');
+  // Only one inline icon, no sprite counterpart — plain name, no Inline suffix.
+  expect(output).toContain("import IconName from 'my-app/assets/icons/icon-name.svg?unsafe-inline';");
+  expect(output).toContain('<IconName />');
+  expect(output).not.toContain('{{svgJar "icon-name"}}');
+
+  await expect(output).toMatchFileSnapshot('./_snapshots/no-imports-output.gjs');
+});
+
+// ---------------------------------------------------------------------------
+// renamed-import.gjs
+// ---------------------------------------------------------------------------
+
+test('renamed-import.gjs: handles custom import names', async () => {
+  const output = run(
+    readFileSync('./tests/_fixtures/renamed-import.gjs', 'utf-8'),
+    './tests/_fixtures/renamed-import.gjs',
+  );
+  expect(output).toContain('<IconName />');
+  expect(output).toContain('<SpriteIcon />');
+  expect(output).not.toContain("import myCustomImportName from 'ember-svg-jar/helpers/svg-jar';");
+  expect(output).not.toContain('{{myCustomImportName "icon-name"}}');
+
+  await expect(output).toMatchFileSnapshot('./_snapshots/renamed-import-output.gjs');
 });
