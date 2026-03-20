@@ -1,5 +1,8 @@
 # SVG Jar
 
+> [!WARNING]  
+> This project is in early development and is not yet ready for any use.
+
 SVG Jar is a collection of tools for working with SVG files on the web.
 
 ## Packages
